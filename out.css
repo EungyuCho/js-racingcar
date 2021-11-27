@@ -1,0 +1,183 @@
+/* src/css/shared/button.css */
+.btn {
+  height: 36px;
+  min-width: 64px;
+  padding: 0 16px;
+  border-radius: 4px;
+  outline: 0;
+  border-style: none;
+  cursor: pointer;
+}
+.btn-cyan {
+  background-color: #00bcd4 !important;
+  border-color: #00bcd4 !important;
+}
+.btn.btn-cyan:hover {
+  background-color: #018c9e !important;
+}
+
+/* src/css/shared/layout.css */
+.relative {
+  position: relative;
+}
+.absolute {
+  position: absolute;
+}
+.fixed {
+  position: fixed;
+}
+.d-flex {
+  display: flex;
+}
+.d-block {
+  display: block;
+}
+.d-inline {
+  display: inline;
+}
+.d-inline-block {
+  display: inline-block;
+}
+.mt-2 {
+  margin-top: 8px;
+}
+.mt-3 {
+  margin-top: 12px;
+}
+.mt-4 {
+  margin-top: 16px;
+}
+.mt-5 {
+  margin-top: 20px;
+}
+.mr-2 {
+  margin-right: 8px;
+}
+.justify-start {
+  justify-content: flex-start;
+}
+.justify-end {
+  justify-content: flex-end;
+}
+.justify-center {
+  justify-content: center;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.justify-around {
+  justify-content: space-around;
+}
+.justify-evenly {
+  justify-content: space-evenly;
+}
+.items-start {
+  align-items: flex-start;
+}
+.items-end {
+  align-items: flex-end;
+}
+.items-center {
+  align-items: center;
+}
+.items-baseline {
+  align-items: baseline;
+}
+.items-stretch {
+  align-items: stretch;
+}
+.content-center {
+  align-content: center;
+}
+.content-start {
+  align-content: flex-start;
+}
+.content-end {
+  align-content: flex-end;
+}
+.content-between {
+  align-content: space-between;
+}
+.content-around {
+  align-content: space-around;
+}
+.content-evenly {
+  align-content: space-around;
+}
+
+/* src/css/shared/sizing.css */
+.w-100 {
+  width: 100%;
+}
+
+/* src/css/shared/typhography.css */
+.text-left {
+  text-align: left;
+}
+.text-center {
+  text-align: center;
+}
+.text-right {
+  text-align: right;
+}
+.text-justify {
+  text-align: justify;
+}
+
+/* src/css/ui/spinner.css */
+.spinner-container {
+  width: 25px;
+  height: 25px;
+}
+.spinner::after {
+  content: "";
+  box-sizing: border-box;
+  width: 25px;
+  height: 25px;
+  left: 0;
+  top: 0;
+  position: absolute;
+  border-radius: 50%;
+}
+.spinner.material::after {
+  border-top: 4px solid rgba(0, 191, 215, 1);
+  border-left: 4px solid rgba(0, 191, 215, 1);
+  border-bottom: 4px solid rgba(0, 191, 215, 1);
+  border-right: 4px solid rgba(0, 191, 215, 0);
+  animation: spinner 0.6s linear infinite;
+}
+@keyframes spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* src/css/index.css */
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+.car-player {
+  height: 36px;
+  min-width: 64px;
+  padding: 0 16px;
+  border-radius: 4px;
+  outline: 0;
+  border-style: none;
+  background-color: #f5f5f5;
+  display: inline-flex;
+  font-weight: bold;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.forward-icon {
+  font-size: 32px;
+  display: flex;
+  justify-content: center;
+}
+fieldset {
+  border: none;
+  padding: 0;
+}
