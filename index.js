@@ -11,7 +11,7 @@
   };
 
   // src/ts/constants/ErrorMessage.ts
-  var NAME_LENGTH_INVALID_ERROR = "\uC790\uB3D9\uCC28\uC758 \uC774\uB984\uC740 5\uC790 \uC774\uD558\uB9CC \uAC00\uB2A5\uD569\uB2C8\uB2E4.";
+  var NAME_LENGTH_INVALID_ERROR = "\uC790\uB3D9\uCC28\uC758 \uC774\uB984\uC740 \uD55C\uAE00\uC790 ~ 5\uAE00\uC790 \uC0AC\uC774\uB9CC \uAC00\uB2A5\uD569\uB2C8\uB2E4.";
   var GAME_COUNT_INVALID_ERROR = "\uAC8C\uC784\uD69F\uC218\uB294 1\uC774\uC0C1\uC73C\uB85C \uC785\uB825\uD574\uC8FC\uC138\uC694.";
   var ERROR_MESSAGES = Object.freeze({
     NAME_LENGTH_INVALID_ERROR,
@@ -104,7 +104,7 @@
     const cars = [];
     const carNameArray = splitCarNames(carNames);
     for (const carName of carNameArray) {
-      if (carName.length > 5) {
+      if (carName.length > 5 || !carName.length) {
         throw new Error(ErrorMessage_default.NAME_LENGTH_INVALID_ERROR);
       }
       cars.push(new car_model_default(carName));
@@ -309,8 +309,10 @@
         setStyle(this.state);
         onEventEnd();
       } catch (error) {
+        console.log(error);
+        console.log(error.message);
         onError();
-        alert(error);
+        alert(error.message);
       }
     }
     resetGame() {
