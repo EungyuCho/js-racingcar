@@ -348,6 +348,7 @@
           makeAction: () => ({ _t: "SET_WINNER", winners }),
           onEventEnd: () => {
             ViewComponents.WinnerLabel.textContent = `\u{1F3C6} \uCD5C\uC885 \uC6B0\uC2B9\uC790: ${winners.join(", ")} \u{1F3C6}`;
+            ViewComponents.WinnerLabel.dataset.winners = winners.join(", ");
           }
         });
       };
