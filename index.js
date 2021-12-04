@@ -86,31 +86,19 @@
   var Car = class {
     name;
     #progressDistance;
-    #targetCount;
-    #currentCount;
     constructor(name) {
       this.name = name;
       this.#progressDistance = 0;
-      this.#targetCount = 0;
-      this.#currentCount = 0;
     }
     move() {
       const isProgress = this.isProgress();
-      const status = this.isGameEnded() ? "end" : "playing";
       if (isProgress) {
         this.#progressDistance += 1;
       }
-      return { type: status, move: isProgress };
-    }
-    isGameEnded() {
-      return this.#targetCount === this.#currentCount;
+      return { isProgress };
     }
     isProgress() {
-      this.#currentCount += 1;
       return getRamdomNumber({ min: 0, max: 9 }) >= 4;
-    }
-    set targetCount(count) {
-      this.#targetCount = count;
     }
     get moveDistance() {
       return this.#progressDistance;
@@ -278,6 +266,22 @@
     }
   };
 
+  // src/ts/store/Racing.store.ts
+  var RacingStore = class {
+    #targetProgress;
+    #currentProgress;
+    progressRacingTurn() {
+      this.#currentProgress += 1;
+    }
+    set gameCount(count) {
+      this.#targetProgress = count;
+      this.#currentProgress = 0;
+    }
+    get isGameEnd() {
+      return this.#currentProgress === this.#targetProgress;
+    }
+  };
+
   // src/ts/controller/racing.controller.ts
   var ViewComponents = {
     GameCountFieldset: $({ selector: "game-count-fieldset", type: "CLASSNAME" }),
@@ -298,6 +302,7 @@
     $RacingContainerView;
     $WinnerLabelView;
     $CarContinerViews;
+    store;
     currentProgressCount;
     state;
     dispatch;
@@ -307,6 +312,7 @@
         cars: [],
         gameCount: null
       });
+      this.store = new RacingStore();
       this.state = state;
       this.dispatch = dispatch;
       this.$CarNameInputView = new CarNameInputView({
@@ -408,32 +414,35 @@
       this.$CarContinerViews = new Map();
     }
     startGame() {
+      this.store.gameCount = this.state.gameCount || 0;
       this.state.cars.forEach((car) => {
-        car.targetCount = this.state.gameCount || 0;
         this.$CarContinerViews.set(car.name, new CarContinerView({ root: ViewComponents.RacingContainer, car }));
       });
       const animate = () => {
-        let isGameEnd = false;
         this.state.cars.forEach((car) => {
-          const moveResponse = car.move();
+          const { isProgress } = car.move();
           const $CarContainer = this.$CarContinerViews.get(car.name);
           if (!$CarContainer) {
             return;
           }
-          if (moveResponse.move) {
+          if (isProgress) {
             $CarContainer.move();
           }
-          if (moveResponse.type === "end") {
-            $CarContainer.stop();
-            isGameEnd = true;
-          }
         });
-        if (!isGameEnd) {
+        this.store.progressRacingTurn();
+        if (!this.store.isGameEnd) {
           requestAnimationFrame(() => {
             setTimeout(() => animate(), 1e3);
           });
           return;
         }
+        this.state.cars.forEach((car) => {
+          const $CarContainer = this.$CarContinerViews.get(car.name);
+          if (!$CarContainer) {
+            return;
+          }
+          $CarContainer.stop();
+        });
         let maxMovementDistance = -1;
         const winners = this.state.cars.map((car) => {
           if (maxMovementDistance < car.moveDistance) {
