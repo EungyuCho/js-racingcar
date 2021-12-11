@@ -1,6 +1,6 @@
 (() => {
   // src/ts/utils/dom.ts
-  var $ = (selector, type = "ID") => {
+  var $ = ({ selector, type = "ID" }) => {
     if (type === "ID") {
       return document.querySelector("#" + selector);
     }
@@ -10,8 +10,66 @@
     return document.querySelector(selector);
   };
 
+  // src/ts/core/View.ts
+  var View = class {
+    root;
+    constructor({ root }) {
+      this.root = root;
+    }
+    reset() {
+    }
+  };
+
+  // src/ts/view/components/GameCountInputView.ts
+  var GameCountInputView = class extends View {
+    reset() {
+      this.clear();
+      this.focus();
+    }
+    clear() {
+      this.root.value = "";
+    }
+    focus() {
+      this.root.focus();
+    }
+  };
+
+  // src/ts/view/components/RacingContinerView.ts
+  var RacingContainerView = class extends View {
+    reset() {
+      this.clear();
+    }
+    clear() {
+      this.root.textContent = "";
+    }
+  };
+
+  // src/ts/view/components/WinnerLabelView.ts
+  var WinnerLabelView = class extends View {
+    reset() {
+      this.clear();
+    }
+    clear() {
+      this.root.textContent = "";
+    }
+    render({ winners }) {
+      this.root.textContent = `\u{1F3C6} \uCD5C\uC885 \uC6B0\uC2B9\uC790: ${winners.join(", ")} \u{1F3C6}`;
+    }
+  };
+
+  // src/ts/view/components/CarNameInputView.ts
+  var CarNameInputView = class extends View {
+    reset() {
+      this.root.value = "";
+      this.focus();
+    }
+    focus() {
+      this.root.focus();
+    }
+  };
+
   // src/ts/constants/ErrorMessage.ts
-  var NAME_LENGTH_INVALID_ERROR = "\uC790\uB3D9\uCC28\uC758 \uC774\uB984\uC740 5\uC790 \uC774\uD558\uB9CC \uAC00\uB2A5\uD569\uB2C8\uB2E4.";
+  var NAME_LENGTH_INVALID_ERROR = "\uC790\uB3D9\uCC28\uC758 \uC774\uB984\uC740 \uD55C\uAE00\uC790 ~ 5\uAE00\uC790 \uC0AC\uC774\uB9CC \uAC00\uB2A5\uD569\uB2C8\uB2E4.";
   var GAME_COUNT_INVALID_ERROR = "\uAC8C\uC784\uD69F\uC218\uB294 1\uC774\uC0C1\uC73C\uB85C \uC785\uB825\uD574\uC8FC\uC138\uC694.";
   var ERROR_MESSAGES = Object.freeze({
     NAME_LENGTH_INVALID_ERROR,
@@ -28,59 +86,16 @@
   var Car = class {
     name;
     #progressDistance;
-    #targetCount;
-    #viewContiner;
-    #RoadElement;
     constructor(name) {
       this.name = name;
       this.#progressDistance = 0;
-      this.#targetCount = 0;
-      this.#viewContiner = ViewComponents.RacingContainer;
     }
-    move(currentCount) {
+    move() {
       const isProgress = this.isProgress();
       if (isProgress) {
         this.#progressDistance += 1;
-        this.renderProgressArrow();
       }
-      if (this.isGameEnded(currentCount)) {
-        const arrowElement = this.#RoadElement.querySelector(".d-flex");
-        arrowElement.remove();
-      }
-    }
-    createContainer() {
-      const RoadElement = document.createElement("div");
-      RoadElement.classList.add("mr-2");
-      RoadElement.innerHTML = `
-      <div class="car-player">${this.name}</div>
-      <div class="d-flex justify-center mt-3">
-        <div class="relative spinner-container">
-          <span class="material spinner"></span>
-        </div>
-      </div>
-    `;
-      this.#RoadElement = RoadElement;
-    }
-    renderRoad() {
-      this.createContainer();
-      this.#viewContiner.insertAdjacentElement("beforeend", this.#RoadElement);
-    }
-    renderProgressArrow() {
-      const arrowElement = this.#RoadElement.querySelector(".d-flex");
-      arrowElement.outerHTML = `
-      <div class="forward-icon mt-2">\u2B07\uFE0F\uFE0F</div>
-      <div class="d-flex justify-center mt-3">
-          <div class="relative spinner-container">
-            <span class="material spinner"></span>
-          </div>
-        </div>
-    `;
-    }
-    set targetCount(count) {
-      this.#targetCount = count;
-    }
-    isGameEnded(currentCount) {
-      return this.#targetCount === currentCount;
+      return { isProgress };
     }
     isProgress() {
       return getRamdomNumber({ min: 0, max: 9 }) >= 4;
@@ -104,7 +119,7 @@
     const cars = [];
     const carNameArray = splitCarNames(carNames);
     for (const carName of carNameArray) {
-      if (carName.length > 5) {
+      if (carName.length > 5 || !carName.length) {
         throw new Error(ErrorMessage_default.NAME_LENGTH_INVALID_ERROR);
       }
       cars.push(new car_model_default(carName));
@@ -138,10 +153,11 @@
           cars: prevState.cars,
           gameCount: getGameCount(action.gameCount)
         };
-      case "CHECK_WINNER":
+      case "SET_WINNER":
         return {
           ...prevState,
-          _t: "check_winner"
+          _t: "set_winner",
+          winners: action.winners
         };
     }
   }
@@ -199,28 +215,94 @@
         GameCountInput.disabled = true;
         GameCountButton.disabled = true;
         return;
-      case "check_winner":
+      case "set_winner":
         WinnerSection.style.cssText = css`
-        display: block;
+        display: flex;
       `;
         return;
     }
   };
 
+  // src/ts/view/components/CarContainerView.ts
+  var CarContinerView = class extends View {
+    #car;
+    $carContainer;
+    constructor({ root, car }) {
+      super({ root });
+      this.#car = car;
+      this.renderCarContainer();
+    }
+    render({ winners }) {
+      this.root.textContent = `\u{1F3C6} \uCD5C\uC885 \uC6B0\uC2B9\uC790: ${winners.join(", ")} \u{1F3C6}`;
+    }
+    renderCarContainer() {
+      const $carContainer = document.createElement("div");
+      $carContainer.classList.add("mr-2");
+      $carContainer.innerHTML = `
+      <div class="car-player">${this.#car.name}</div>
+      <div class="d-flex justify-center mt-3">
+        <div class="relative spinner-container">
+          <span class="material spinner"></span>
+        </div>
+      </div>
+    `;
+      this.root.insertAdjacentElement("beforeend", $carContainer);
+      this.$carContainer = $carContainer;
+    }
+    move() {
+      const arrowElement = this.$carContainer.querySelector(".d-flex");
+      arrowElement.outerHTML = `
+      <div class="forward-icon mt-2">\u2B07\uFE0F\uFE0F</div>
+      <div class="d-flex justify-center mt-3">
+          <div class="relative spinner-container">
+            <span class="material spinner"></span>
+          </div>
+        </div>
+    `;
+    }
+    stop() {
+      const arrowElement = this.$carContainer.querySelector(".d-flex");
+      arrowElement.remove();
+    }
+  };
+
+  // src/ts/store/Racing.store.ts
+  var RacingStore = class {
+    #targetProgress;
+    #currentProgress;
+    progressRacingTurn() {
+      this.#currentProgress += 1;
+    }
+    set gameCount(count) {
+      this.#targetProgress = count;
+      this.#currentProgress = 0;
+    }
+    get isGameEnd() {
+      return this.#currentProgress === this.#targetProgress;
+    }
+  };
+
   // src/ts/controller/racing.controller.ts
   var ViewComponents = {
-    GameCountFieldset: $("game-count-fieldset", "CLASSNAME"),
-    CarNameFieldset: $("car-name-fieldset", "CLASSNAME"),
-    RacingRoadSection: $("racing-road-section", "CLASSNAME"),
-    WinnerSection: $("winner-section", "CLASSNAME"),
-    CarNameInput: $("car_name_input"),
-    CarNameButton: $("car_name_button"),
-    GameCountInput: $("game_count_input"),
-    GameCountButton: $("game_count_button"),
-    ResetButton: $("reset_button"),
-    RacingContainer: $("racing-road-container")
+    GameCountFieldset: $({ selector: "game-count-fieldset", type: "CLASSNAME" }),
+    CarNameFieldset: $({ selector: "car-name-fieldset", type: "CLASSNAME" }),
+    RacingRoadSection: $({ selector: "racing-road-section", type: "CLASSNAME" }),
+    WinnerSection: $({ selector: "winner-section", type: "CLASSNAME" }),
+    CarNameInput: $({ selector: "car_name_input" }),
+    CarNameButton: $({ selector: "car_name_button" }),
+    GameCountInput: $({ selector: "game_count_input" }),
+    GameCountButton: $({ selector: "game_count_button" }),
+    ResetButton: $({ selector: "reset_button" }),
+    RacingContainer: $({ selector: "racing-road-container" }),
+    WinnerLabel: $({ selector: "winner_label" })
   };
   var RacingController = class {
+    $CarNameInputView;
+    $GameCountInputView;
+    $RacingContainerView;
+    $WinnerLabelView;
+    $CarContinerViews;
+    store;
     currentProgressCount;
     state;
     dispatch;
@@ -230,9 +312,22 @@
         cars: [],
         gameCount: null
       });
-      this.currentProgressCount = 0;
+      this.store = new RacingStore();
       this.state = state;
       this.dispatch = dispatch;
+      this.$CarNameInputView = new CarNameInputView({
+        root: ViewComponents.CarNameInput
+      });
+      this.$GameCountInputView = new GameCountInputView({
+        root: ViewComponents.GameCountInput
+      });
+      this.$RacingContainerView = new RacingContainerView({
+        root: ViewComponents.RacingContainer
+      });
+      this.$WinnerLabelView = new WinnerLabelView({
+        root: ViewComponents.WinnerLabel
+      });
+      this.$CarContinerViews = new Map();
       setStyle(state);
       this.setEvent();
     }
@@ -252,11 +347,10 @@
           };
         },
         onError: () => {
-          CarNameInput.value = "";
-          CarNameInput.focus();
+          this.$CarNameInputView.reset();
         },
         onEventEnd: () => {
-          GameCountInput.focus();
+          this.$CarNameInputView.focus();
         }
       });
       const dispatchInsertGameCount = () => this.dispatchEvent({
@@ -268,8 +362,7 @@
         },
         onEventEnd: () => this.startGame(),
         onError: () => {
-          GameCountInput.value = "";
-          GameCountInput.focus();
+          this.$GameCountInputView.reset();
         }
       });
       const dispatchResetGame = () => this.dispatchEvent({
@@ -280,6 +373,9 @@
         },
         onEventEnd: () => {
           this.currentProgressCount = 0;
+          this.$GameCountInputView.clear();
+          this.$RacingContainerView.reset();
+          this.$CarNameInputView.reset();
         }
       });
       const isPressEnter = (event) => event.key === "Enter";
@@ -310,25 +406,57 @@
         onEventEnd();
       } catch (error) {
         onError();
-        alert(error);
+        alert(error.message);
       }
     }
     resetGame() {
       this.dispatch({ _t: "SET_IDLE" });
+      this.$CarContinerViews = new Map();
     }
     startGame() {
+      this.store.gameCount = this.state.gameCount || 0;
       this.state.cars.forEach((car) => {
-        car.targetCount = this.state.gameCount || 0;
-        car.renderRoad();
+        this.$CarContinerViews.set(car.name, new CarContinerView({ root: ViewComponents.RacingContainer, car }));
       });
       const animate = () => {
-        this.currentProgressCount += 1;
-        this.state.cars.forEach((car) => car.move(this.currentProgressCount));
-        if (this.currentProgressCount < (this.state.gameCount || 0)) {
+        this.state.cars.forEach((car) => {
+          const { isProgress } = car.move();
+          const $CarContainer = this.$CarContinerViews.get(car.name);
+          if (!$CarContainer) {
+            return;
+          }
+          if (isProgress) {
+            $CarContainer.move();
+          }
+        });
+        this.store.progressRacingTurn();
+        if (!this.store.isGameEnd) {
           requestAnimationFrame(() => {
             setTimeout(() => animate(), 1e3);
           });
+          return;
         }
+        this.state.cars.forEach((car) => {
+          const $CarContainer = this.$CarContinerViews.get(car.name);
+          if (!$CarContainer) {
+            return;
+          }
+          $CarContainer.stop();
+        });
+        let maxMovementDistance = -1;
+        const winners = this.state.cars.map((car) => {
+          if (maxMovementDistance < car.moveDistance) {
+            maxMovementDistance = car.moveDistance;
+          }
+          return { name: car.name, move: car.moveDistance };
+        }).filter((car) => car.move === maxMovementDistance).map((car) => car.name);
+        this.dispatchEvent({
+          makeAction: () => ({ _t: "SET_WINNER", winners }),
+          onEventEnd: () => {
+            this.$WinnerLabelView.render({ winners });
+            setTimeout(() => alert("\u{1F387}\u{1F387}\u{1F387}\u{1F387}\uCD95\uD558\uD569\uB2C8\uB2E4!\u{1F387}\u{1F387}\u{1F387}\u{1F387}"), 2e3);
+          }
+        });
       };
       animate();
     }
