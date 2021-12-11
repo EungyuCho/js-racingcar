@@ -10,64 +10,6 @@
     return document.querySelector(selector);
   };
 
-  // src/ts/core/View.ts
-  var View = class {
-    root;
-    constructor({ root }) {
-      this.root = root;
-    }
-    reset() {
-    }
-  };
-
-  // src/ts/view/components/GameCountInputView.ts
-  var GameCountInputView = class extends View {
-    reset() {
-      this.clear();
-      this.focus();
-    }
-    clear() {
-      this.root.value = "";
-    }
-    focus() {
-      this.root.focus();
-    }
-  };
-
-  // src/ts/view/components/RacingContinerView.ts
-  var RacingContainerView = class extends View {
-    reset() {
-      this.clear();
-    }
-    clear() {
-      this.root.textContent = "";
-    }
-  };
-
-  // src/ts/view/components/WinnerLabelView.ts
-  var WinnerLabelView = class extends View {
-    reset() {
-      this.clear();
-    }
-    clear() {
-      this.root.textContent = "";
-    }
-    render({ winners }) {
-      this.root.textContent = `\u{1F3C6} \uCD5C\uC885 \uC6B0\uC2B9\uC790: ${winners.join(", ")} \u{1F3C6}`;
-    }
-  };
-
-  // src/ts/view/components/CarNameInputView.ts
-  var CarNameInputView = class extends View {
-    reset() {
-      this.root.value = "";
-      this.focus();
-    }
-    focus() {
-      this.root.focus();
-    }
-  };
-
   // src/ts/constants/ErrorMessage.ts
   var NAME_LENGTH_INVALID_ERROR = "\uC790\uB3D9\uCC28\uC758 \uC774\uB984\uC740 \uD55C\uAE00\uC790 ~ 5\uAE00\uC790 \uC0AC\uC774\uB9CC \uAC00\uB2A5\uD569\uB2C8\uB2E4.";
   var GAME_COUNT_INVALID_ERROR = "\uAC8C\uC784\uD69F\uC218\uB294 1\uC774\uC0C1\uC73C\uB85C \uC785\uB825\uD574\uC8FC\uC138\uC694.";
@@ -86,16 +28,59 @@
   var Car = class {
     name;
     #progressDistance;
+    #targetCount;
+    #viewContiner;
+    #RoadElement;
     constructor(name) {
       this.name = name;
       this.#progressDistance = 0;
+      this.#targetCount = 0;
+      this.#viewContiner = ViewComponents.RacingContainer;
     }
-    move() {
+    move(currentCount) {
       const isProgress = this.isProgress();
       if (isProgress) {
         this.#progressDistance += 1;
+        this.renderProgressArrow();
       }
-      return { isProgress };
+      if (this.isGameEnded(currentCount)) {
+        const arrowElement = this.#RoadElement.querySelector(".d-flex");
+        arrowElement.remove();
+      }
+    }
+    createContainer() {
+      const RoadElement = document.createElement("div");
+      RoadElement.classList.add("mr-2");
+      RoadElement.innerHTML = `
+      <div class="car-player">${this.name}</div>
+      <div class="d-flex justify-center mt-3">
+        <div class="relative spinner-container">
+          <span class="material spinner"></span>
+        </div>
+      </div>
+    `;
+      this.#RoadElement = RoadElement;
+    }
+    renderRoad() {
+      this.createContainer();
+      this.#viewContiner.insertAdjacentElement("beforeend", this.#RoadElement);
+    }
+    renderProgressArrow() {
+      const arrowElement = this.#RoadElement.querySelector(".d-flex");
+      arrowElement.outerHTML = `
+      <div class="forward-icon mt-2">\u2B07\uFE0F\uFE0F</div>
+      <div class="d-flex justify-center mt-3">
+          <div class="relative spinner-container">
+            <span class="material spinner"></span>
+          </div>
+        </div>
+    `;
+    }
+    set targetCount(count) {
+      this.#targetCount = count;
+    }
+    isGameEnded(currentCount) {
+      return this.#targetCount === currentCount;
     }
     isProgress() {
       return getRamdomNumber({ min: 0, max: 9 }) >= 4;
@@ -223,65 +208,6 @@
     }
   };
 
-  // src/ts/view/components/CarContainerView.ts
-  var CarContinerView = class extends View {
-    #car;
-    $carContainer;
-    constructor({ root, car }) {
-      super({ root });
-      this.#car = car;
-      this.renderCarContainer();
-    }
-    render({ winners }) {
-      this.root.textContent = `\u{1F3C6} \uCD5C\uC885 \uC6B0\uC2B9\uC790: ${winners.join(", ")} \u{1F3C6}`;
-    }
-    renderCarContainer() {
-      const $carContainer = document.createElement("div");
-      $carContainer.classList.add("mr-2");
-      $carContainer.innerHTML = `
-      <div class="car-player">${this.#car.name}</div>
-      <div class="d-flex justify-center mt-3">
-        <div class="relative spinner-container">
-          <span class="material spinner"></span>
-        </div>
-      </div>
-    `;
-      this.root.insertAdjacentElement("beforeend", $carContainer);
-      this.$carContainer = $carContainer;
-    }
-    move() {
-      const arrowElement = this.$carContainer.querySelector(".d-flex");
-      arrowElement.outerHTML = `
-      <div class="forward-icon mt-2">\u2B07\uFE0F\uFE0F</div>
-      <div class="d-flex justify-center mt-3">
-          <div class="relative spinner-container">
-            <span class="material spinner"></span>
-          </div>
-        </div>
-    `;
-    }
-    stop() {
-      const arrowElement = this.$carContainer.querySelector(".d-flex");
-      arrowElement.remove();
-    }
-  };
-
-  // src/ts/store/Racing.store.ts
-  var RacingStore = class {
-    #targetProgress;
-    #currentProgress;
-    progressRacingTurn() {
-      this.#currentProgress += 1;
-    }
-    set gameCount(count) {
-      this.#targetProgress = count;
-      this.#currentProgress = 0;
-    }
-    get isGameEnd() {
-      return this.#currentProgress === this.#targetProgress;
-    }
-  };
-
   // src/ts/controller/racing.controller.ts
   var ViewComponents = {
     GameCountFieldset: $({ selector: "game-count-fieldset", type: "CLASSNAME" }),
@@ -297,12 +223,6 @@
     WinnerLabel: $({ selector: "winner_label" })
   };
   var RacingController = class {
-    $CarNameInputView;
-    $GameCountInputView;
-    $RacingContainerView;
-    $WinnerLabelView;
-    $CarContinerViews;
-    store;
     currentProgressCount;
     state;
     dispatch;
@@ -312,22 +232,9 @@
         cars: [],
         gameCount: null
       });
-      this.store = new RacingStore();
+      this.currentProgressCount = 0;
       this.state = state;
       this.dispatch = dispatch;
-      this.$CarNameInputView = new CarNameInputView({
-        root: ViewComponents.CarNameInput
-      });
-      this.$GameCountInputView = new GameCountInputView({
-        root: ViewComponents.GameCountInput
-      });
-      this.$RacingContainerView = new RacingContainerView({
-        root: ViewComponents.RacingContainer
-      });
-      this.$WinnerLabelView = new WinnerLabelView({
-        root: ViewComponents.WinnerLabel
-      });
-      this.$CarContinerViews = new Map();
       setStyle(state);
       this.setEvent();
     }
@@ -337,7 +244,8 @@
         CarNameButton,
         GameCountInput,
         GameCountButton,
-        WinnerSection
+        WinnerSection,
+        RacingContainer
       } = ViewComponents;
       const dispatchInsertCars = () => this.dispatchEvent({
         makeAction: () => {
@@ -347,10 +255,11 @@
           };
         },
         onError: () => {
-          this.$CarNameInputView.reset();
+          CarNameInput.value = "";
+          CarNameInput.focus();
         },
         onEventEnd: () => {
-          this.$CarNameInputView.focus();
+          GameCountInput.focus();
         }
       });
       const dispatchInsertGameCount = () => this.dispatchEvent({
@@ -362,7 +271,8 @@
         },
         onEventEnd: () => this.startGame(),
         onError: () => {
-          this.$GameCountInputView.reset();
+          GameCountInput.value = "";
+          GameCountInput.focus();
         }
       });
       const dispatchResetGame = () => this.dispatchEvent({
@@ -373,9 +283,10 @@
         },
         onEventEnd: () => {
           this.currentProgressCount = 0;
-          this.$GameCountInputView.clear();
-          this.$RacingContainerView.reset();
-          this.$CarNameInputView.reset();
+          CarNameInput.value = "";
+          GameCountInput.value = "";
+          RacingContainer.innerHTML = "";
+          CarNameInput.focus();
         }
       });
       const isPressEnter = (event) => event.key === "Enter";
@@ -411,38 +322,21 @@
     }
     resetGame() {
       this.dispatch({ _t: "SET_IDLE" });
-      this.$CarContinerViews = new Map();
     }
     startGame() {
-      this.store.gameCount = this.state.gameCount || 0;
       this.state.cars.forEach((car) => {
-        this.$CarContinerViews.set(car.name, new CarContinerView({ root: ViewComponents.RacingContainer, car }));
+        car.targetCount = this.state.gameCount || 0;
+        car.renderRoad();
       });
       const animate = () => {
-        this.state.cars.forEach((car) => {
-          const { isProgress } = car.move();
-          const $CarContainer = this.$CarContinerViews.get(car.name);
-          if (!$CarContainer) {
-            return;
-          }
-          if (isProgress) {
-            $CarContainer.move();
-          }
-        });
-        this.store.progressRacingTurn();
-        if (!this.store.isGameEnd) {
+        this.currentProgressCount += 1;
+        this.state.cars.forEach((car) => car.move(this.currentProgressCount));
+        if (this.currentProgressCount < (this.state.gameCount || 0)) {
           requestAnimationFrame(() => {
             setTimeout(() => animate(), 1e3);
           });
           return;
         }
-        this.state.cars.forEach((car) => {
-          const $CarContainer = this.$CarContinerViews.get(car.name);
-          if (!$CarContainer) {
-            return;
-          }
-          $CarContainer.stop();
-        });
         let maxMovementDistance = -1;
         const winners = this.state.cars.map((car) => {
           if (maxMovementDistance < car.moveDistance) {
@@ -453,7 +347,8 @@
         this.dispatchEvent({
           makeAction: () => ({ _t: "SET_WINNER", winners }),
           onEventEnd: () => {
-            this.$WinnerLabelView.render({ winners });
+            ViewComponents.WinnerLabel.textContent = `\u{1F3C6} \uCD5C\uC885 \uC6B0\uC2B9\uC790: ${winners.join(", ")} \u{1F3C6}`;
+            setTimeout(() => alert("\u{1F387}\u{1F387}\u{1F387}\u{1F387}\uCD95\uD558\uD569\uB2C8\uB2E4!\u{1F387}\u{1F387}\u{1F387}\u{1F387}"), 2e3);
           }
         });
       };
