@@ -1,6 +1,6 @@
 (() => {
   // src/ts/utils/dom.ts
-  var $ = ({ selector, type = "ID" }) => {
+  var $ = (selector, type = "ID") => {
     if (type === "ID") {
       return document.querySelector("#" + selector);
     }
@@ -11,7 +11,7 @@
   };
 
   // src/ts/constants/ErrorMessage.ts
-  var NAME_LENGTH_INVALID_ERROR = "\uC790\uB3D9\uCC28\uC758 \uC774\uB984\uC740 \uD55C\uAE00\uC790 ~ 5\uAE00\uC790 \uC0AC\uC774\uB9CC \uAC00\uB2A5\uD569\uB2C8\uB2E4.";
+  var NAME_LENGTH_INVALID_ERROR = "\uC790\uB3D9\uCC28\uC758 \uC774\uB984\uC740 5\uC790 \uC774\uD558\uB9CC \uAC00\uB2A5\uD569\uB2C8\uB2E4.";
   var GAME_COUNT_INVALID_ERROR = "\uAC8C\uC784\uD69F\uC218\uB294 1\uC774\uC0C1\uC73C\uB85C \uC785\uB825\uD574\uC8FC\uC138\uC694.";
   var ERROR_MESSAGES = Object.freeze({
     NAME_LENGTH_INVALID_ERROR,
@@ -104,7 +104,7 @@
     const cars = [];
     const carNameArray = splitCarNames(carNames);
     for (const carName of carNameArray) {
-      if (carName.length > 5 || !carName.length) {
+      if (carName.length > 5) {
         throw new Error(ErrorMessage_default.NAME_LENGTH_INVALID_ERROR);
       }
       cars.push(new car_model_default(carName));
@@ -138,11 +138,10 @@
           cars: prevState.cars,
           gameCount: getGameCount(action.gameCount)
         };
-      case "SET_WINNER":
+      case "CHECK_WINNER":
         return {
           ...prevState,
-          _t: "set_winner",
-          winners: action.winners
+          _t: "check_winner"
         };
     }
   }
@@ -200,9 +199,9 @@
         GameCountInput.disabled = true;
         GameCountButton.disabled = true;
         return;
-      case "set_winner":
+      case "check_winner":
         WinnerSection.style.cssText = css`
-        display: flex;
+        display: block;
       `;
         return;
     }
@@ -210,17 +209,16 @@
 
   // src/ts/controller/racing.controller.ts
   var ViewComponents = {
-    GameCountFieldset: $({ selector: "game-count-fieldset", type: "CLASSNAME" }),
-    CarNameFieldset: $({ selector: "car-name-fieldset", type: "CLASSNAME" }),
-    RacingRoadSection: $({ selector: "racing-road-section", type: "CLASSNAME" }),
-    WinnerSection: $({ selector: "winner-section", type: "CLASSNAME" }),
-    CarNameInput: $({ selector: "car_name_input" }),
-    CarNameButton: $({ selector: "car_name_button" }),
-    GameCountInput: $({ selector: "game_count_input" }),
-    GameCountButton: $({ selector: "game_count_button" }),
-    ResetButton: $({ selector: "reset_button" }),
-    RacingContainer: $({ selector: "racing-road-container" }),
-    WinnerLabel: $({ selector: "winner_label" })
+    GameCountFieldset: $("game-count-fieldset", "CLASSNAME"),
+    CarNameFieldset: $("car-name-fieldset", "CLASSNAME"),
+    RacingRoadSection: $("racing-road-section", "CLASSNAME"),
+    WinnerSection: $("winner-section", "CLASSNAME"),
+    CarNameInput: $("car_name_input"),
+    CarNameButton: $("car_name_button"),
+    GameCountInput: $("game_count_input"),
+    GameCountButton: $("game_count_button"),
+    ResetButton: $("reset_button"),
+    RacingContainer: $("racing-road-container")
   };
   var RacingController = class {
     currentProgressCount;
@@ -244,8 +242,7 @@
         CarNameButton,
         GameCountInput,
         GameCountButton,
-        WinnerSection,
-        RacingContainer
+        WinnerSection
       } = ViewComponents;
       const dispatchInsertCars = () => this.dispatchEvent({
         makeAction: () => {
@@ -283,10 +280,6 @@
         },
         onEventEnd: () => {
           this.currentProgressCount = 0;
-          CarNameInput.value = "";
-          GameCountInput.value = "";
-          RacingContainer.innerHTML = "";
-          CarNameInput.focus();
         }
       });
       const isPressEnter = (event) => event.key === "Enter";
@@ -317,7 +310,7 @@
         onEventEnd();
       } catch (error) {
         onError();
-        alert(error.message);
+        alert(error);
       }
     }
     resetGame() {
@@ -335,22 +328,7 @@
           requestAnimationFrame(() => {
             setTimeout(() => animate(), 1e3);
           });
-          return;
         }
-        let maxMovementDistance = -1;
-        const winners = this.state.cars.map((car) => {
-          if (maxMovementDistance < car.moveDistance) {
-            maxMovementDistance = car.moveDistance;
-          }
-          return { name: car.name, move: car.moveDistance };
-        }).filter((car) => car.move === maxMovementDistance).map((car) => car.name);
-        this.dispatchEvent({
-          makeAction: () => ({ _t: "SET_WINNER", winners }),
-          onEventEnd: () => {
-            ViewComponents.WinnerLabel.textContent = `\u{1F3C6} \uCD5C\uC885 \uC6B0\uC2B9\uC790: ${winners.join(", ")} \u{1F3C6}`;
-            setTimeout(() => alert("\u{1F387}\u{1F387}\u{1F387}\u{1F387}\uCD95\uD558\uD569\uB2C8\uB2E4!\u{1F387}\u{1F387}\u{1F387}\u{1F387}"), 2e3);
-          }
-        });
       };
       animate();
     }
